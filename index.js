@@ -16,21 +16,43 @@ app.use(bodyParser.urlencoded({extended:true}))
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true , connectTimeoutMS: 30000 ,  keepAlive: 1});
 client.connect(err => {
-  const collection = client.db("volunteer").collection("events");
+  const eventCollection = client.db("volunteer").collection("events");
+  const adminCollection = client.db("volunteer").collection("admin");
+
   app.post("/addEvent",(req,res)=>{
     const newEvent=req.body
     console.log(newEvent)
-    collection.insertOne(newEvent)
+    eventCollection.insertOne(newEvent)
     .then(result=>{
         res.send(result.insertedCount>0);
     })
     .catch(err=>{
         console.log(err)
     })
+ })
+
+ app.post("/addAdmin",(req,res)=>{
+  const newAdmin=req.body
+  console.log(newAdmin)
+  adminCollection.insertOne(newAdmin)
+  .then(result=>{
+      res.send(result.insertedCount>0);
+  })
+  .catch(err=>{
+      console.log(err)
+  })
+})
+
+app.get('/admins',(req,res)=>{
+  adminCollection.find({})
+  .toArray((err,documents)=>{
+      res.send(documents)
+  })
+  
 })
 
   app.get("/personalEvents",(req,res)=>{
-    collection.find({email:req.query.email})
+    eventCollection.find({email:req.query.email})
     .toArray((err,documents)=>{
         res.status(200).send(documents)
     })
@@ -39,7 +61,7 @@ client.connect(err => {
   app.delete("/delete/:id",(req,res)=>{
     const eventId=req.params.id.toString()
     console.log(eventId)
-    collection.deleteOne({_id:ObjectId(req.params.id)})
+    eventCollection.deleteOne({_id:ObjectId(req.params.id)})
     .then(result=>{
       console.log(result)
       res.send(result.deletedCount>0)
@@ -53,4 +75,4 @@ app.get('/', (req, res) => {
     res.send('Hello World!')
   })
   
-app.listen(port)
+  app.listen(process.env.PORT || port)
